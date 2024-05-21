@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bfdb4d3d-ada7-4dc5-87f2-148b6b02fe6f" >
+		<http:listener-connection host="localhost" port="8082" />
+	</http:listener-config>
+	<anypoint-mq:config name="Anypoint_MQ_Config" doc:name="Anypoint MQ Config" doc:id="e31c04cf-69f0-4f52-8324-69b5e5ae8495" >
+		<anypoint-mq:connection url="https://mq-us-east-1.anypoint.mulesoft.com/api/v1/organizations/911ba26f-6cd0-47cd-9248-062abbc45fdf/environments/be61ae32-43c1-4e7a-8860-449d5c9557de" clientId="fc30f1c1916d4e85b5ae7fd2decf4798" clientSecret="480b8C00cc5c44d6904109304927961a" />
+	</anypoint-mq:config>
+	<flow name="anypoint-mqFlow" doc:id="5fbb1008-5ff5-42ce-ba72-e2a183af348d" >
+		<http:listener doc:name="Listener" doc:id="276ce556-9290-423c-b29c-ab37691bd73b" config-ref="HTTP_Listener_config" path="/mq"/>
+		<anypoint-mq:publish doc:name="Publish" doc:id="e6fcfefa-5a70-4d5f-a3eb-865c4c592e6b" config-ref="Anypoint_MQ_Config" destination="suneetha-exchange"/>
+		<ee:transform doc:name="Transform Message" doc:id="2334f5de-0e16-4384-ab03-c0e6705764c2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="anypoint-mqFlow2" doc:id="882599d1-452b-467a-97ee-633cf86a4b56" >
+		<http:listener doc:name="Listener" doc:id="23f88790-7941-4f7d-973f-bc2b71accddc" config-ref="HTTP_Listener_config" path="/mq-consume" />
+		<anypoint-mq:consume doc:name="Consume" doc:id="310b4c21-cf16-4e41-b667-1c16f6bdaede" config-ref="Anypoint_MQ_Config" destination="suneetha-training"/>
+		<ee:transform doc:name="Transform Message" doc:id="8aba2f6f-6745-440b-80d7-4c967b53a404" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="anypoint-mqFlow1" doc:id="a7dfcb19-a22c-4b0b-b537-c0c315632cb0" >
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="8f5a4093-48fb-4b74-9e11-c4edc56acb92" config-ref="Anypoint_MQ_Config" destination="suneetha-training"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4c87f9d1-1a91-4deb-90a8-cfb468745b34" message="#[payload]"/>
+	</flow>
+</mule>
